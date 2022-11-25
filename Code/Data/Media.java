@@ -13,7 +13,12 @@ public abstract class Media {
     public final int releaseYear;
     public final float rating;
 
-    /** The different categories that movies and series can belong to */
+    /** An enum of the different categories that movies and series can belong to
+     * <p> TODO: Maybe make this consist of flags in a bit field?
+     * An enum value is stored as an int, which is 4 bytes,
+     * while of 23 categories, 3 bytes are used,
+     * because 3 bytes contain 24 bits.
+    */
     public static enum Category {
         Action, Adventure, Biography, Comedy , Crime, Drama, // Ignoring uppercase convention ¯\_(ツ)_/¯
         Family, Fantasy, History, Horror,  Mystery, Romance,

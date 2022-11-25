@@ -1,0 +1,11 @@
+Count 100000
+Query "I like cake very much !!! Hello everybody how are you"
+
+Cache & Parallel:
+	average = 0.16518 ms, error = 0.27666
+Cache & Sequential:
+	average = 0.1981_ ms, error = 0.31875
+No cache & Parallel:
+	average = 0.22939 ms, error = 0.35428
+No cache & Sequential:
+	average = 0.38286 ms, error = 0.47574

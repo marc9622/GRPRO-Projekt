@@ -1,6 +1,6 @@
 package Code.Logic;
 import java.io.IOException;
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -13,12 +13,12 @@ import Code.Data.Media;
  * <p> Use {@link #getLibrary()} to get the library of media.
  * <p> Use {@link #search(String)} to search for media.
  * <p> Use {@link #add(Media)} to add media to the library.
- * <p> Use {@link #remove(Media)} to remove media from the library.
+ * <p> Use {@link #remove(Media)} to remove media from the library. </ul>
  */
 public class MediaLibrary {
 
     private Set<Media> library = null;
-    private MediaSearching.SearchCache searchResult = new MediaSearching.SearchCache();
+    private MediaSorting.SearchCache searchCache = new MediaSorting.SearchCache();
 
     /** Creates an empty media library.*/
     public MediaLibrary() {}
@@ -43,25 +43,40 @@ public class MediaLibrary {
     public void readFiles(String filePathMovies, String filePathSeries) throws IOException, FileParsing.InvalidStringFormatException {
         Media[] mediaArray = FileParsing.parseFiles(filePathMovies, filePathSeries);
         library = Stream.of(mediaArray).filter(m -> m != null).collect(Collectors.toSet());
-        searchResult.clear();
+        searchCache.clear();
     }
 
-    /** Returns the media that matches the given query.
+    /** Returns the media library sorted by the given search string.
      * Searches by title and category, <i>case insensitive</i>.
      * @param query The query to search for.
+     * @param useCache Whether to use the search cache.
+     * @param parallel Whether to use concurrent search.
      * @return A set of media that matches the given query.
      */
-    public Set<Media> search(String query) {
-        return MediaSearching.searchByQueries(query.split(" "), library, searchResult, false);
+    public List<Media> sortBySearch(String query, boolean useCache, boolean parallel) {
+        return sortBySearch(query, library.size(), useCache, parallel);
     }
 
-    /** Returns the media that matches the most of the given queries.
+    /** Returns the media library sorted by the given search string.
      * Searches by title and category, <i>case insensitive</i>.
      * @param query The query to search for.
+     * @param count The maximum number of results to return. Best results are returned first.
+     * @param useCache Whether to use the search cache.
+     * @param parallel Whether to use concurrent search.
      * @return A set of media that matches the given query.
      */
-    public Optional<Media> searchOne(String query) {
-        return MediaSearching.searchByQueriesTop(query.split(" "), library, searchResult, false);
+    public List<Media> sortBySearch(String query, int count, boolean useCache, boolean parallel) {
+        return MediaSorting.sortBySearchQueries(library, query.split(" "), searchCache, count, useCache, parallel);
+    }
+
+    /** Returns a sorted list of the library,
+     * using a specified sorting method.
+     * @param sortBy The property to sort by.
+     * @param sortOrder The order to sort in.
+     * @return The sorted list of media.
+     */
+    public List<Media> sortBy(MediaSorting.SortBy sortBy, MediaSorting.SortOrder sortOrder) {
+        return MediaSorting.sortMedia(library, sortBy, sortOrder);
     }
 
     /** Adds the given media to the library, and clears the search cache.
@@ -69,7 +84,7 @@ public class MediaLibrary {
      */
     public void add(Media media) {
         library.add(media);
-        searchResult.clear();
+        searchCache.clear();
     }
 
     /** Adds all media in the given set to the library, and clears the search cache.
@@ -77,7 +92,7 @@ public class MediaLibrary {
      */
     public void addAll(Set<Media> media) {
         library.addAll(media);
-        searchResult.clear();
+        searchCache.clear();
     }
 
     /** Removes the given media from the library, and clears the search cache.
@@ -85,12 +100,12 @@ public class MediaLibrary {
      */
     public void remove(Media media) {
         library.remove(media);
-        searchResult.clear();
+        searchCache.clear();
     }
 
     /** Clears the library, and clears the search cache. */
     public void removeAll() {
         library.clear();
-        searchResult.clear();
+        searchCache.clear();
     }
 }
