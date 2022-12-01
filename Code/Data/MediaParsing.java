@@ -5,19 +5,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Effectively just functions as a namespace for functions that parse files.
  * <p> Use {@link #parseFiles(String, String)} to read parse movie and series files.
  * <p> Contains {@link #InvalidStringFormatException} for when a string is formatted incorrectly.
  */
-public class FileParsing {
+public class MediaParsing {
 
     /** Prevents instantiation of this class.
      * This class only contains static methods,
      * and exists only because Java forces you to use classes,
      * even when it is unnecessary.
      */
-    private FileParsing () {}
+    private MediaParsing () {}
 
     /** Reads and parses the given files.
      * <p> Lines must be written in the format specified at {@link #parseStringToMedia}.
@@ -28,18 +30,21 @@ public class FileParsing {
      * @throws InvalidStringFormatException If a line in the file is not written in the correct format.
      */
     public static Media[] parseFiles(String filePathMovies, String filePathSeries) throws IOException, InvalidStringFormatException {
-        String[] linesMovies = readFile(filePathMovies);
-        String[] linesSeries = readFile(filePathSeries);
-        return parseLines(linesMovies, linesSeries);
+        // Read all lines from files
+        String[] linesMovies = readLinesFromFile(filePathMovies);
+        String[] linesSeries = readLinesFromFile(filePathSeries);
+
+        // Parse all lines to media
+        return parseLinesToMedia(linesMovies, linesSeries);
     }
 
     /** Finds a file in the resources folder, and returns its contents as a String array.
      * The file is assumed to be encoded in {@code ISO-8859-1}.
      * @param filePath The name of the text file to be read.
-     * @return A string array of the contents of the file separated by lines.
+     * @return An {@code ISO-8859-1} string array of the contents of the file separated by lines.
      * @throws IOException If an I/O error occurs trying to read from the file.
      */
-    private static String[] readFile(String filePath) throws IOException {
+    private static String[] readLinesFromFile(String filePath) throws IOException {
         String string = Files.readString(Path.of(filePath), StandardCharsets.ISO_8859_1);
         return string.split("\n");
     }
@@ -50,13 +55,12 @@ public class FileParsing {
      * @return An array of movies and series.
      * @throws InvalidStringFormatException If a string could not be parsed.
      */
-    private static Media[] parseLines(String[] linesMovies, String[] linesSeries) throws InvalidStringFormatException {
-        Media[] media = new Media[linesMovies.length + linesSeries.length];
+    static Media[] parseLinesToMedia(String[]... lines) throws InvalidStringFormatException {
+        Media[] media = new Media[Stream.of(lines).mapToInt(l -> l.length).sum()];
 
-        for(int i = 0; i < linesMovies.length; i++)
-            media[i] = parseStringToMedia(linesMovies[i], true);
-        for(int i = 0; i < linesSeries.length; i++)
-            media[i + linesMovies.length] = parseStringToMedia(linesSeries[i], false);
+        for(int i = 0; i < lines.length; i++)
+            for(int j = 0; j < lines[i].length; j++)
+                media[i * lines[i].length + j] = parseStringToMedia(lines[i][j]);
 
         return media;
     }
@@ -73,7 +77,7 @@ public class FileParsing {
      * @return Either a Movie or Serie object. (Or null if the string is ignored.)
      * @throws InvalidStringFormatException If the string is not formatted correctly.
      */
-    private static Media parseStringToMedia(String string, boolean isMovie) throws InvalidStringFormatException {
+    static Media parseStringToMedia(String string) throws InvalidStringFormatException {
         // If the line starts with "//", it is ignored.
         if(string.startsWith("//")) return null;
 
@@ -83,19 +87,19 @@ public class FileParsing {
         ParsingState isParsing = ParsingState.TITLE;
 
         // These variables are used to store the parsed data.
+        boolean knowItIsSerie = false; // This is unknown at this point, but it is set later.
         String title = null;
         int releaseYear = 0;
         boolean isEnded = false;
         int endYear = 0;
         List<Movie.Category> categories = new ArrayList<>(4);
         float rating = 0;
-        List<Integer> seasonLengths = !isMovie ? new ArrayList<>(6) : null;
+        List<Integer> seasonLengths = null;
 
         // Simply a index variable used to keep track of what the last parsed character was.
         int lastParsed = 0;
 
         // This loop parses the string.
-        nextParsingLoop:
         for(int i = 0; i < string.length() && isParsing != ParsingState.DONE; i++) {
             char c = string.charAt(i);
             boolean isSemicolon = c == ';';
@@ -113,44 +117,27 @@ public class FileParsing {
             // Parse the release year
             if(isParsing == ParsingState.RELEASE_YEAR) {
 
-                // If the media is a movie and we haven't reached a semicolon, continue.
-                if(isMovie && !isSemicolon) continue;
+                // If we haven't reached a semicolon or hyphen, continue.
+                if(!(isSemicolon || c == '-')) continue;
 
-                // If the media is a serie and we haven't reached a semicolon or hyphen, continue.
-                if(!isMovie && !isSemicolon && c != '-') continue;
+                // If we have reached a hyphen, we know it is a serie.
+                if(!isSemicolon) knowItIsSerie = true;
 
                 // Try to parse the release year.
                 try {
                     releaseYear = Integer.parseInt(string.substring(lastParsed, i).strip());
                 } catch (NumberFormatException e) {
-                    throw new InvalidStringFormatException("Could not parse year (int) from '" + string.substring(lastParsed, i).strip() + "'.", string);
+                    throw new InvalidStringFormatException("Tried to parse Media, but could not parse year (int) from '" + string.substring(lastParsed, i).strip() + "'.", string);
                 }
 
                 // Update the last parsed index.
                 lastParsed = i + 1;
 
-                // If the media is a movie, then we go parse the categories.
-                if(isMovie) {
-                    isParsing = ParsingState.CATEGORIES;
-                }
+                // If we reached a semicolon, then we parse the categories.
+                if(isSemicolon) isParsing = ParsingState.CATEGORIES;
                 
-                // If the media is a serie, then we check if it has an end year
-                else {
-                    // Check if we meet a hyphen, indicating that the series might have an end year and
-                    // we should parse the end year. If it is a semicolon, then go parse the categories.
-                    while (i < string.length() && string.charAt(i) != ';') {
-                        if(string.charAt(i) != '-')
-                            i++;
-                        else {
-                            isParsing = ParsingState.END_YEAR;
-                            lastParsed = i + 1;
-                            continue nextParsingLoop;
-                        }
-                    }
-                    
-                    // If we didn't meet a hyphen, then we parse the categories.
-                    isParsing = ParsingState.CATEGORIES;
-                }
+                // If we reached a hyphen, then we parse the end year.
+                else isParsing = ParsingState.END_YEAR;
                 
                 continue;
             }
@@ -167,7 +154,7 @@ public class FileParsing {
                     try {
                         endYear = Integer.parseInt(endYearString);
                     } catch (NumberFormatException e) {
-                        throw new InvalidStringFormatException("Could not parse end year (int) from '" + endYearString + "'.", string);
+                        throw new InvalidStringFormatException("Tried to parse Media, but could not parse end year (int) from '" + endYearString + "'.", string);
                     }
                 }
 
@@ -183,11 +170,14 @@ public class FileParsing {
                 if(!isSemicolon && c != ',') continue;
 
                 // Parse the category and add it to the list.
-                try {
-                    categories.add(Media.Category.fromString(string.substring(lastParsed, i).strip()));
-                } catch (IllegalArgumentException e) {
-                    throw new InvalidStringFormatException("Could not parse category '" + string.substring(0, i).strip() + "'.", string);
-                }
+                String categoryString = string.substring(lastParsed, i).strip();
+                Optional<Media.Category> category = Media.Category.fromString(categoryString);
+
+                // If the category is present, add it to the list.
+                if(category.isPresent()) categories.add(category.get());
+
+                // If the category is not present, then it is invalid.
+                else throw new InvalidStringFormatException("Tried to parse Media, but could not parse category from '" + categoryString + "'.", string);
 
                 // Update the last parsed index.
                 lastParsed = i + 1;
@@ -209,16 +199,13 @@ public class FileParsing {
                     throw new InvalidStringFormatException("Could not parse rating (float) from '" + string.substring(lastParsed, i).strip() + "'.", string);
                 }
 
-                if(isMovie) {
-                    lastParsed = i + 1;
-                    isParsing = ParsingState.DONE;
-                    break;
-                }
-                else {
-                    lastParsed = i + 1;
-                    isParsing = ParsingState.SEASONS;
-                    continue;
-                }
+                // If the media didn't contain a hyphen after the release year,
+                // then we still don't know if it is a movie or a series.
+                // Therefore, we just continue to parsing the seasons.
+                lastParsed = i + 1;
+                isParsing = ParsingState.SEASONS;
+                seasonLengths = new ArrayList<>(6);
+                continue;
             }
 
             // Parse the season
@@ -229,19 +216,21 @@ public class FileParsing {
                 
                 // Find the index of the hyphen.
                 int hyphen = string.indexOf('-', lastParsed);
-                if(hyphen == -1) throw new InvalidStringFormatException("Could not parse season and length from '" + string.substring(lastParsed, i).strip() + "'.", string);
+                if(hyphen == -1)
+                    throw new InvalidStringFormatException("Tried to parse Serie, but could not parse season and length from '" + string.substring(lastParsed, i).strip() + "'.", string);
                 
                 // Parse the season and length and add it to the list.
                 try {
                     // The season is the first part of the string. From lastParsed to hyphen.
                     int season = Integer.parseInt(string.substring(lastParsed, hyphen).strip());
-                    if(season != seasonLengths.size() + 1) throw new InvalidStringFormatException("Season number is not in order.", string);
+                    if(season != seasonLengths.size() + 1)
+                        throw new InvalidStringFormatException("Tried to parse Serie, but season numbers are not in order.", string);
 
                     // The length is the second part of the string. From hyphen+1 to i.
                     int seasonLength = Integer.parseInt(string.substring(hyphen + 1, i).strip());
                     seasonLengths.add(seasonLength);
                 } catch (NumberFormatException numberFormat) {
-                    throw new InvalidStringFormatException("Could not parse season from '" + string.substring(lastParsed, i).strip() + "'.", string);
+                    throw new InvalidStringFormatException("Tried to parse Serie, but could not parse season from '" + string.substring(lastParsed, i).strip() + "'.", string);
                 }
 
                 lastParsed = i + 1;
@@ -254,16 +243,45 @@ public class FileParsing {
             }
         }
 
-        // If the parsing state is not DONE, then the string ended before it was finished.
-        if(isParsing != ParsingState.DONE) throw new InvalidStringFormatException("Could not parse string to movie. String ended prematurely.", string);
+        // If we knew the media was a serie, and we didn't end in the DONE state,
+        // then we know that the string was invalid.
+        if(knowItIsSerie && isParsing != ParsingState.DONE)
+            throw new InvalidStringFormatException("Tried to parse Serie, but string ended prematurely.", string);
+
+        // If we didn't know the whether it was a movie or serie...
+        if(!knowItIsSerie) {
+            // and we didn't end in the DONE state...
+            if(isParsing != ParsingState.DONE) {
+                // and we didn't end in the SEASONS state either, then we know that the string was invalid.
+                if(isParsing != ParsingState.SEASONS)
+                    throw new InvalidStringFormatException("Tried to parse Media, but string ended prematurely.", string);
+                
+                // If we did end in the SEASONS state, but the seasons list is not empty, then it was an invalid serie.
+                else if(!seasonLengths.isEmpty())
+                    throw new InvalidStringFormatException("Tried to parse Serie, but string ended prematurely.", string);
+                
+                // Otherwise, we know it is a movie.
+            }
+
+            // If we ended in the DONE state, and the seasons list is not empty, then we know it is a series.
+            else if(!seasonLengths.isEmpty()) {
+                knowItIsSerie = true;
+            }
+
+            // Otherwise, we know it is a movie.
+        }
+
+        // *At this point, we are sure whether it is a movie or series.*
 
         // If the string is longer than expected, throw an exception.
-        if(!string.substring(lastParsed).isBlank()) throw new InvalidStringFormatException("String contains more characters than expected.", string);
+        if(!string.substring(lastParsed).isBlank())
+            throw new InvalidStringFormatException("Tried to parse " + (knowItIsSerie ? "Serie" : "Movie") + ", " +
+                                                   "but string contained more characters than expected.", string);
 
         // Create the media object and return it.
-        if(isMovie) return new Movie(title, releaseYear, categories.toArray(Media.Category[]::new), rating);
-        else        return new Serie(title, releaseYear, isEnded, endYear, categories.toArray(Media.Category[]::new), rating,
-                                     seasonLengths.stream().mapToInt(i -> i).toArray());
+        if(!knowItIsSerie) return new Movie(title, releaseYear, categories.toArray(Media.Category[]::new), rating);
+        else               return new Serie(title, releaseYear, isEnded, endYear, categories.toArray(Media.Category[]::new), rating,
+                                            seasonLengths.stream().mapToInt(i -> i).toArray());
     }
 
     /** Thrown when a string cannot be parsed to a movie or a serie.
@@ -279,5 +297,5 @@ public class FileParsing {
             return fileString;
         }
     }
-
+    
 }

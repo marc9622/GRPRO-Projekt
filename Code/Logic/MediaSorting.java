@@ -80,7 +80,6 @@ public class MediaSorting {
         Comparator.comparing((Function<Media, String>)(m -> m.title))
                   .thenComparing(Comparator.comparingInt((ToIntFunction<Media>)m -> m.releaseYear).reversed());
 
-
     /** Takes a set of media and returns a map mapping from media to a search score.
      * The searh score for each media is calculated based on how well
      * the query matches the title of the media. See {@link #calcSearchScore(String, String)}.
@@ -183,13 +182,13 @@ public class MediaSorting {
         
         // For each query...
         stream.map(String::toLowerCase)
-            // First search by title, calculate the score mapping...
+            // first search by title and calculate the score mapping...
             .peek(query -> calcSearchScorerByTitle(query, media, cache, useCache)
-                           // And for each media in the mapping, add the score to the score map.
+                           // and for each media in the mapping, add the score to the score map.
                            .forEach((m, score) -> scoreMap.merge(m, score, Integer::sum)))
-            // Then search by category, calculate the score mapping...
+            // secondly search by category and calculate the score mapping...
             .forEach(query -> calcSearchScorerByCategory(query, media)
-                              // And for each media in the mapping, add the score to the score map.
+                              // and for each media in the mapping, add the score to the score map.
                               .forEach((m, score) -> scoreMap.merge(m, score, Integer::sum)));
 
         // Creates a comparator that uses the score map to compare media.
@@ -233,6 +232,7 @@ public class MediaSorting {
      * @return A sorted list of media that matches the given queries.
      */
     public static List<Media> sortBySearchQueries(Set<Media> media, String[] queries, SearchCache cache, boolean useCache, boolean parallel) {
+        // Simply an overload of the method above.
         return sortBySearchQueries(media, queries, cache, media.size(), useCache, parallel);
     }
 

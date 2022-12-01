@@ -1,13 +1,13 @@
 package Code.Data;
+import java.io.Serializable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-/** Super class for both movies and series.
-*/
-public abstract class Media {
+/** Super class for both movies and series. */
+public abstract class Media implements Serializable {
 
     public final String title;
     public final int releaseYear;
@@ -46,8 +46,8 @@ public abstract class Media {
          * @param string The string to parse.
          * @return The category that corresponds to the given string.
          */
-        public static Category fromString(String string) {
-            return map.get(string.toLowerCase());
+        public static Optional<Category> fromString(String string) {
+            return Optional.ofNullable(map.get(string.toLowerCase()));
         }
 
         /** Returns a set of string representing the categories, <i>in lowercase</i>.
@@ -77,70 +77,15 @@ public abstract class Media {
         this.rating = rating;
     }
 
-    public abstract String toString();
-
     protected String getCategoriesString() {
         return Stream.of(categories)
                      .map(Category::toString)
                      .collect(Collectors.joining(", "));
     }
-}
 
-class Movie extends Media {
+    public abstract String toString();
 
-    /**
-     * @param title The title of the movie.
-     * @param releaseYear The year the movie was released.
-     * @param categories The categories the movie belongs to.
-     * @param rating The rating of the movie.
-     */
-    public Movie(String title, int releaseYear, Category[] categories, float rating) {
-        super(title, releaseYear, categories, rating);
-    }
+    public abstract int hashCode();
 
-    public String toString() {
-        return title + "; " + releaseYear + "; " + getCategoriesString() + "; " + rating + ";";
-    }
-}
-
-class Serie extends Media {
-
-    private final boolean isEnded;
-    
-    /** <i>Should only be used if {@link #isEnded} is {@code true}</i>.*/
-    private final int endYear;
-
-    /** The number of episodes per season in order. The indices are therefore the seasons numbers.*/
-    private final int[] seasonLengths;
-
-    /**
-     * @param title The title of the serie.
-     * @param releaseYear The year the serie started.
-     * @param isEnded Whether the serie has ended.
-     * @param endYear The year the serie ended. <i>Only relevant if {@link #isEnded} is {@code true}</i>.
-     * @param categories The categories the serie belongs to.
-     * @param rating The rating of the serie.
-     * @param seasonLengths The number of episodes per season in order. The indices are therefore the seasons numbers.
-     */
-    public Serie(String title, int releaseYear, boolean isEnded, int endYear, Category[] categories, float rating, int[] seasonLengths) {
-        super(title, releaseYear, categories, rating);
-        this.isEnded = isEnded;
-        this.endYear = endYear;
-        this.seasonLengths = seasonLengths;
-    }
-
-    private String getSeasonLengthsString() {
-        return IntStream.range(0, seasonLengths.length)
-                        .mapToObj(i -> (i + 1) + "-" + seasonLengths[i])
-                        .collect(Collectors.joining(", "));
-    }
-
-    public String toString() {
-        return title + "; " +
-               releaseYear + "- " +
-               (isEnded ? endYear : "") + "; " +
-               getCategoriesString() + "; " +
-               rating + "; " +
-               getSeasonLengthsString() + ";";
-    }
+    public abstract boolean equals(Object obj);    
 }

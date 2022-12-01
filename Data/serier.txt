@@ -7,7 +7,7 @@ Curb Your Enthusiasm; 2000-; Comedy; 8,7; 1-10, 2-10, 3-10, 4-10, 5-10, 6-10, 7-
 Lost; 2004-2010; Adventure, Drama, Fantasy; 8,4; 1-25, 2-24, 3-23, 4-14, 5-17, 6-18;
 Louie; 2010-2015; Comedy, Drama; 8,6; 1-13, 2-13, 3-13, 4-14, 5-8;
 Cheers; 1982-1993; Comedy, Drama; 7,8; 1-22, 2-22, 3-25, 4-26, 5-26, 6-25, 7-22, 8-26, 9-27, 10-26, 11-28;
-Scener ur ett ï¿½ktenskap; 1973; Drama; 8,5; 1-6;
+Scener ur ett äktenskap; 1973; Drama; 8,5; 1-6;
 Buffy The Vampire Slayer; 1996-2003; Action, Drama, Fantasy; 8,2; 1-12, 2-22, 3-22, 4-22, 5-22, 6-22, 7-22;
 The Shield; 2002-2008; Crime, Drama, Thriller; 8,7; 1-13, 2-13, 3-15, 4-13, 5-11, 6-10, 7-13;
 Deadwood; 2004-2006; Crime, Drama, History; 8,7; 1-12, 2-12, 3-12;
@@ -38,7 +38,7 @@ Alfred Hitchcock Presents; 1955-1962; Crime, Drama, Mystery; 8,6; 1-39, 2-39, 3-
 I Love Lucy; 1951-1957; Comedy, Family; 8,3; 1-35, 2-31, 3-31, 4-30, 5-26, 6-27;
 24; 2001-2010; Action, Crime, Drama; 8,4; 1-24, 2-24, 3-24, 4-24, 5-24, 6-24,7-24, 8-24;
 The Americans; 2013-2018; Crime, Drama, Mystery; 8,4; 1-13, 2-13, 3-13, 4-13, 5-13, 6-10;
-//Girls; 2012-2017; Comedy, Drama; 7,3; 1-10, 2-10, 3-12, 4-10, 5-10; 6-10;
+// Girls; 2012-2017; Comedy, Drama; 7,3; 1-10, 2-10, 3-12, 4-10, 5-10; 6-10;
 Mad Men; 2007-2015; Drama; 8,6; 1-13, 2-13, 3-13, 4-13, 5-13, 6-13, 7-14;
 Northern Exposure; 1990-1995; Comedy, Drama, Fantasy; 8,3; 1-8, 2-7, 3-23, 4-25, 5-24, 6-23;
 Star Trek; 1966-1969; Action, Adventure, Sci-fi; 8,3; 1-29, 2-26, 3-24;
@@ -86,7 +86,7 @@ Sex & The City; 1998-2004; Comedy, Drama, Romance; 7,1; 1-12, 2-18, 3-18, 4-18, 
 Tyrant; 2014-2016; Action, Drama, Thriller; 7,8; 1-10, 2-12, 3-10;
 Billions; 2016- ; Drama; 8,4; 1-12, 2-12, 3-12;
 Shameless; 2011- ; Comedy, Drama; 8,7; 1-12, 2-12, 3-12, 4-12, 5-12, 6-12, 7-12, 8-12, 9-7;
-//Smallville; 2001-2011; Adventure, Drama, Romance; 7,5; 1-21, 2-23, 3-22, 4-22, 5-22, 6-22, 7-20, 8-22, 9-21, 19-22;
+// Smallville; 2001-2011; Adventure, Drama, Romance; 7,5; 1-21, 2-23, 3-22, 4-22, 5-22, 6-22, 7-20, 8-22, 9-21, 19-22;
 The Defenders; 2017 ; Action, Adventure, Crime; 7,5; 1-8;
 House; 2004-2012; Drama, Mystery; 8,8;  1-22, 2-24, 3-24, 4-16, 5-24, 6-21, 7-23, 8-22;  
 Fear The Walking Dead; 2015-; Drama, Horror, Sci-fi; 7,0; 1-6, 2-15, 3-16, 4-16;
